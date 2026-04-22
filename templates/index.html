@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Guide - AI-Powered Learning Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #3B82F6;
+            --primary-dark: #1E40AF;
+            --secondary: #8B5CF6;
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --light: #F3F4F6;
+            --text-dark: #1F2937;
+            --text-light: #6B7280;
+            --border: #E5E7EB;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* ========== HEADER ========== */
+        header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            color: white;
+            padding: 30px 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        header p {
+            font-size: 0.95rem;
+            opacity: 0.9;
+        }
+
+        /* ========== MAIN LAYOUT ========== */
+        .main-wrapper {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        /* ========== SIDEBAR ========== */
+        .sidebar {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .sidebar h2 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sidebar h2::before {
+            content: "📁";
+            font-size: 1.3rem;
+        }
+
+        .doc-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .doc-item {
+            padding: 10px;
+            background: var(--light);
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .doc-item:hover {
+            background: #E0E7FF;
+            transform: translateX(4px);
+        }
+
+        .doc-item.active {
+            background: #DDD6FE;
+            border-left-color: var(--secondary);
+        }
+
+        .doc-item-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .doc-item-meta {
+            font-size: 0.75rem;
+            color: var(--text-light);
+        }
+
+        .empty-docs {
+            text-align: center;
+            color: var(--text-light);
+            padding: 20px 10px;
+            font-size: 0.9rem;
+        }
+
+        /* ========== MAIN CONTENT ========== */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-top: 4px solid transparent;
+        }
+
+        .card-upload {
+            border-top-color: var(--primary);
+        }
+
+        .card-questions {
+            border-top-color: var(--secondary);
+        }
+
+        .card-chat {
+            border-top-color: var(--success);
+            grid-column: 1 / -1;
+        }
+
+        .card h2 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* ========== FILE UPLOAD ========== */
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: var(--light);
+        }
+
+        .upload-area:hover,
+        .upload-area.drag-over {
+            border-color: var(--primary);
+            background: #EFF6FF;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .upload-area p {
+            margin: 5px 0;
+            font-size: 0.95rem;
+        }
+
+        .upload-area .main-text {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .upload-area .sub-text {
+            color: var(--text-light);
+            font-size: 0.85rem;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .uploading {
+            display: none;
+            padding: 20px;
+            text-align: center;
+            gap: 10px;
+        }
+
+        .uploading.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ========== BUTTONS ========== */
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7C3AED;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+
+        .btn-danger:hover {
+            background: #DC2626;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+
+        .btn-block {
+            width: 100%;
+            justify-content: center;
+        }
+
+        /* ========== QUESTIONS ========== */
+        .questions-container {
+            max-height: 600px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .question-group {
+            border-left: 3px solid var(--secondary);
+            padding-left: 15px;
+        }
+
+        .question-group-title {
+            font-weight: 700;
+            color: var(--secondary);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .question-item {
+            background: var(--light);
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .question-item strong {
+            color: var(--primary);
+        }
+
+        .answer-text {
+            margin-top: 8px;
+            padding: 10px;
+            background: white;
+            border-left: 2px solid var(--success);
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: var(--text-light);
+            display: none;
+        }
+
+        .question-item.expanded .answer-text {
+            display: block;
+        }
+
+        .question-toggle {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .toggle-icon {
+            display: inline-block;
+            transition: transform 0.3s;
+            color: var(--primary);
+        }
+
+        .question-item.expanded .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        /* ========== SUMMARY ========== */
+        .summary-container {
+            padding: 20px;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-radius: 8px;
+            border-left: 4px solid var(--success);
+        }
+
+        #summaryContent h3 {
+            color: var(--success);
+            margin-top: 15px;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        #summaryContent p {
+            line-height: 1.6;
+            color: var(--text);
+            margin-bottom: 15px;
+        }
+
+        #summaryContent ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        #summaryContent li {
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            background: white;
+            border-left: 3px solid var(--success);
+            border-radius: 4px;
+            color: var(--text);
+        }
+
+        .keyword-badge {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-right: 6px;
+            margin-bottom: 8px;
+        }
+
+        /* ========== CHAT ========== */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 500px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: var(--light);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            display: flex;
+            gap: 10px;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-bubble {
+            max-width: 85%;
+            padding: 12px 15px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .message.bot .message-bubble {
+            background: white;
+            border: 1px solid var(--border);
+            color: var(--text-dark);
+        }
+
+        .message.user .message-bubble {
+            background: var(--primary);
+            color: white;
+            border-radius: 12px 0 12px 12px;
+        }
+
+        .message-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .message.bot .message-avatar {
+            background: #DDD6FE;
+        }
+
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .chat-input:focus {
+            border-color: var(--primary);
+        }
+
+        .chat-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+
+        .chat-option {
+            padding: 6px 12px;
+            background: var(--light);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .chat-option:hover,
+        .chat-option.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* ========== STATUS MESSAGES ========== */
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .alert-success {
+            background: #D1FAE5;
+            color: #065F46;
+            border-left: 4px solid var(--success);
+        }
+
+        .alert-error {
+            background: #FEE2E2;
+            color: #7F1D1D;
+            border-left: 4px solid var(--danger);
+        }
+
+        .alert-info {
+            background: #EFF6FF;
+            color: #1E40AF;
+            border-left: 4px solid var(--primary);
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 1024px) {
+            .main-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                order: 2;
+                position: relative;
+                top: 0;
+            }
+
+            .main-content {
+                order: 1;
+                grid-template-columns: 1fr;
+            }
+
+            .card-chat {
+                grid-column: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            .main-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .chat-messages {
+                height: 300px;
+            }
+        }
+
+        /* ========== LOADING STATE ========== */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* ========== TABS FOR QUESTIONS ========== */
+        .question-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .question-tab {
+            padding: 8px 12px;
+            background: transparent;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -12px;
+        }
+
+        .question-tab:hover,
+        .question-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* ========== SCROLLBAR STYLING ========== */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--light);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #B4B4B4;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🎓 AI Study Assistant</h1>
+            <p>Upload documents, generate questions, and chat with AI about your study materials</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="main-wrapper">
+            <!-- SIDEBAR -->
+            <aside class="sidebar">
+                <h2>Documents</h2>
+                <div class="doc-list" id="docList">
+                    <div class="empty-docs">No documents yet. Upload one to get started!</div>
+                </div>
+            </aside>
+
+            <!-- MAIN CONTENT -->
+            <div class="main-content">
+                <!-- FILE UPLOAD CARD -->
+                <div class="card card-upload">
+                    <h2>📤 Upload Document</h2>
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📄</div>
+                        <p class="main-text">Click to upload or drag and drop</p>
+                        <p class="sub-text">PDF, Word, TXT, Markdown, CSV (max 10MB)</p>
+                    </div>
+                    <div class="uploading" id="uploading">
+                        <div class="spinner"></div>
+                        <p>Uploading and processing...</p>
+                    </div>
+                    <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.txt,.md,.csv">
+                </div>
+
+                <!-- QUESTIONS CARD -->
+                <div class="card card-questions">
+                    <h2>❓ Generated Questions</h2>
+                    <div class="question-tabs">
+                        <button class="question-tab active" data-type="all">All</button>
+                        <button class="question-tab" data-type="open">Open-Ended</button>
+                        <button class="question-tab" data-type="multiple">Multiple Choice</button>
+                        <button class="question-tab" data-type="true-false">T/F</button>
+                        <button class="question-tab" data-type="fill">Fill-in</button>
+                        <button class="question-tab" data-type="summary">📋 Summary</button>
+                        <button class="question-tab" data-type="content">📄 View Content</button>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <button class="btn-secondary btn-block" id="generateBtn" disabled>
+                            Generate Questions
+                        </button>
+                        <button class="btn-secondary btn-block" id="summaryBtn" disabled style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                            Generate Summary
+                        </button>
+                    </div>
+                    <div class="questions-container" id="questionsContainer">
+                        <p style="text-align: center; color: var(--text-light); padding: 20px;">
+                            Upload a document and click "Generate Questions" to start
+                        </p>
+                    </div>
+                    <div class="summary-container" id="summaryContainer" style="display: none;">
+                        <div id="summaryContent"></div>
+                    </div>
+                    <div class="summary-container" id="contentContainer" style="display: none; background: linear-gradient(135deg, #f0fdf4 0%, #fef3c7 100%); border-left: 4px solid #f59e0b; max-height: 600px; overflow-y: auto;">
+                        <div id="contentView" style="padding: 20px; white-space: pre-wrap; word-wrap: break-word; font-family: 'Courier New', monospace; font-size: 0.9rem; line-height: 1.6; color: var(--text-dark);"></div>
+                    </div>
+                </div>
+
+                <!-- CHAT CARD -->
+                <div class="card card-chat">
+                    <h2>💬 AI Chatbot</h2>
+                    <div class="chat-options">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="useAllDocs" checked style="cursor: pointer;">
+                            <span style="font-size: 0.9rem;">Use all documents</span>
+                        </label>
+                    </div>
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="message bot">
+                                <div class="message-avatar">🤖</div>
+                                <div class="message-bubble">Hi! I'm your AI study assistant. Upload a document and ask me questions about it!</div>
+                            </div>
+                        </div>
+                        <div class="chat-input-area">
+                            <input 
+                                type="text" 
+                                class="chat-input" 
+                                id="chatInput" 
+                                placeholder="Ask a question about your documents..."
+                            />
+                            <button class="btn-primary" id="sendBtn">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== STATE ==========
+        let documents = [];
+        let selectedDocId = null;
+        let currentQuestions = null;
+        let currentQuestionType = 'all';
+
+        // ========== UI ELEMENTS ==========
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const docList = document.getElementById('docList');
+        const generateBtn = document.getElementById('generateBtn');
+        const questionsContainer = document.getElementById('questionsContainer');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const useAllDocs = document.getElementById('useAllDocs');
+        const uploading = document.getElementById('uploading');
+
+        // ========== EVENT LISTENERS ==========
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileUpload(e.target.files[0]);
+            }
+        });
+
+        generateBtn.addEventListener('click', generateQuestions);
+        document.getElementById('summaryBtn').addEventListener('click', generateSummary);
+        sendBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // ========== INIT VARIABLES ==========
+        let currentSummary = null;
+
+        // ========== QUESTION TABS ==========
+        document.querySelectorAll('.question-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const type = e.target.dataset.type;
+
+                if (type === 'summary') {
+                    // Show summary
+                    document.querySelectorAll('.question-tab').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    document.getElementById('questionsContainer').style.display = 'none';
+                    document.getElementById('summaryContainer').style.display = 'block';
+                    document.getElementById('contentContainer').style.display = 'none';
+                    if (!currentSummary) {
+                        document.getElementById('summaryContent').innerHTML = '<p style="text-align: center; color: var(--text-light);">Click "Generate Summary" to create a summary</p>';
+                    }
+                } else if (type === 'content') {
+                    // Show document content
+                    document.querySelectorAll('.question-tab').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    document.getElementById('questionsContainer').style.display = 'none';
+                    document.getElementById('summaryContainer').style.display = 'none';
+                    document.getElementById('contentContainer').style.display = 'block';
+                    loadDocumentContent();
+                } else {
+                    // Show questions
+                    document.querySelectorAll('.question-tab').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentQuestionType = type;
+                    document.getElementById('questionsContainer').style.display = 'flex';
+                    document.getElementById('summaryContainer').style.display = 'none';
+                    document.getElementById('contentContainer').style.display = 'none';
+                    displayQuestions();
+                }
+            });
+        });
+
+        // ========== FILE UPLOAD ==========
+        async function handleFileUpload(file) {
+            if (file.size > 10 * 1024 * 1024) {
+                showAlert('File is too large (max 10MB)', 'error');
+                return;
+            }
+
+            uploading.classList.add('active');
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert(`✓ Document "${data.filename}" uploaded successfully!`, 'success');
+                    loadDocuments();
+                    generateBtn.disabled = false;
+                    chatInput.disabled = false;
+                    sendBtn.disabled = false;
+                } else {
+                    showAlert(data.error || 'Upload failed', 'error');
+                }
+            } catch (error) {
+                showAlert('Network error: ' + error.message, 'error');
+            } finally {
+                uploading.classList.remove('active');
+                fileInput.value = '';
+            }
+        }
+
+        // ========== LOAD DOCUMENTS ==========
+        async function loadDocuments() {
+            try {
+                const response = await fetch('/api/documents');
+                const data = await response.json();
+                documents = data.documents;
+
+                docList.innerHTML = '';
+                if (documents.length === 0) {
+                    docList.innerHTML = '<div class="empty-docs">No documents yet</div>';
+                    generateBtn.disabled = true;
+                    document.getElementById('summaryBtn').disabled = true;
+                    chatInput.disabled = true;
+                    sendBtn.disabled = true;
+                    return;
+                }
+
+                documents.forEach((doc, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'doc-item' + (doc.id === selectedDocId ? ' active' : '');
+                    item.innerHTML = `
+                        <div class="doc-item-name">${doc.name}</div>
+                        <div class="doc-item-meta">${formatDate(doc.upload_time)}</div>
+                    `;
+                    item.addEventListener('click', () => selectDocument(doc.id, item));
+                    docList.appendChild(item);
+
+                    // Auto-select first document if none selected
+                    if (!selectedDocId && index === 0) {
+                        selectDocument(doc.id, item);
+                    }
+                });
+
+                // Enable buttons once documents are loaded
+                generateBtn.disabled = !selectedDocId;
+                document.getElementById('summaryBtn').disabled = !selectedDocId;
+                chatInput.disabled = false;
+                sendBtn.disabled = false;
+
+            } catch (error) {
+                console.error('Error loading documents:', error);
+                showAlert('Error loading documents: ' + error.message, 'error');
+            }
+        }
+
+        // ========== SELECT DOCUMENT ==========
+        function selectDocument(docId, element) {
+            console.log('Selecting document:', docId);
+            selectedDocId = docId;
+            document.querySelectorAll('.doc-item').forEach(item => item.classList.remove('active'));
+            element.classList.add('active');
+            currentQuestions = null;
+            questionsContainer.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;">Click "Generate Questions" to create questions from this document</p>';
+
+            // Enable question generation buttons when document is selected
+            generateBtn.disabled = false;
+            document.getElementById('summaryBtn').disabled = false;
+        }
+
+        // ========== GENERATE QUESTIONS ==========
+        async function generateQuestions() {
+            console.log('Generate button clicked. selectedDocId:', selectedDocId);
+
+            if (!selectedDocId) {
+                console.log('No document selected!');
+                showAlert('Please select a document first', 'info');
+                return;
+            }
+
+            console.log('Starting question generation for doc:', selectedDocId);
+            generateBtn.disabled = true;
+            questionsContainer.innerHTML = '<div style="text-align: center; padding: 20px;"><div class="spinner" style="margin: 0 auto;"></div><p>Generating questions...</p></div>';
+
+            try {
+                const payload = { doc_id: selectedDocId, type: 'all' };
+                console.log('Sending payload:', payload);
+
+                const response = await fetch('/api/generate-questions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                if (response.ok) {
+                    currentQuestions = data.questions;
+                    console.log('Questions received:', currentQuestions);
+                    console.log('Open-ended count:', currentQuestions.open_ended?.length || 0);
+                    console.log('Multiple choice count:', currentQuestions.multiple_choice?.length || 0);
+                    console.log('True/False count:', currentQuestions.true_false?.length || 0);
+                    console.log('Fill-in-blank count:', currentQuestions.fill_in_blank?.length || 0);
+                    displayQuestions();
+                    showAlert(`✓ Generated questions from "${data.doc_name}"`, 'success');
+                } else {
+                    console.log('API error:', data.error);
+                    showAlert(data.error || 'Failed to generate questions', 'error');
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                showAlert('Error: ' + error.message, 'error');
+            } finally {
+                generateBtn.disabled = false;
+            }
+        }
+
+        // ========== DISPLAY QUESTIONS ==========
+        function displayQuestions() {
+            if (!currentQuestions) {
+                questionsContainer.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;">No questions generated yet</p>';
+                return;
+            }
+
+            let html = '';
+            const q = currentQuestions;
+
+            const types = {
+                open_ended: { title: 'Open-Ended Questions', icon: '📝', data: q.open_ended, type: 'open' },
+                multiple_choice: { title: 'Multiple Choice', icon: '🔘', data: q.multiple_choice, type: 'mc' },
+                true_false: { title: 'True/False', icon: '✓✗', data: q.true_false, type: 'tf' },
+                fill_in_blank: { title: 'Fill in the Blank', icon: '✏️', data: q.fill_in_blank, type: 'fib' }
+            };
+
+            for (const [key, typeInfo] of Object.entries(types)) {
+                if (currentQuestionType !== 'all' && key.replace('_', '-') !== currentQuestionType) continue;
+                if (!typeInfo.data || typeInfo.data.length === 0) continue;
+
+                html += `<div class="question-group">
+                    <div class="question-group-title">${typeInfo.icon} ${typeInfo.title} (${typeInfo.data.length})</div>`;
+
+                typeInfo.data.forEach((item, idx) => {
+                    const qNum = idx + 1;
+                    let keywordsHtml = '';
+                    if (item.keywords && Array.isArray(item.keywords)) {
+                        keywordsHtml = `<div style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px;">
+                            ${item.keywords.map(kw => `<span class="keyword-badge" style="font-size: 0.75rem; padding: 3px 8px;">${escapeHtml(kw)}</span>`).join('')}
+                        </div>`;
+                    }
+
+                    let answerHtml = '';
+
+                    // Build answer HTML based on question type
+                    if (typeInfo.type === 'open') {
+                        // Open-ended
+                        answerHtml = `<strong>✓ Answer:</strong> ${escapeHtml(item.answer || 'N/A')}`;
+                    } else if (typeInfo.type === 'mc') {
+                        // Multiple choice
+                        let optionsHtml = '';
+                        if (item.options && Array.isArray(item.options)) {
+                            item.options.forEach((opt, optIdx) => {
+                                const isCorrect = opt.includes('*');
+                                const cleanOpt = opt.replace('*', '');
+                                optionsHtml += `<div style="margin: 6px 0; padding: 8px; background: ${isCorrect ? '#ECFDF5' : '#F3F4F6'}; border-left: 3px solid ${isCorrect ? 'var(--success)' : 'var(--border)'}; border-radius: 4px;">
+                                    <strong>${String.fromCharCode(65 + optIdx)})</strong> ${escapeHtml(cleanOpt)} ${isCorrect ? '✓ <em style="color: var(--success);">(Correct)</em>' : ''}
+                                </div>`;
+                            });
+                        }
+                        answerHtml = `<strong>✓ Correct Answer:</strong> Option ${item.answer || '?'}<br/>${optionsHtml}<br/><strong>Explanation:</strong> ${escapeHtml(item.explanation || 'N/A')}`;
+                    } else if (typeInfo.type === 'tf') {
+                        // True/False
+                        const correctAnswer = item.correct ? 'TRUE' : 'FALSE';
+                        const answerColor = item.correct ? 'var(--success)' : 'var(--danger)';
+                        answerHtml = `<strong>✓ Correct Answer:</strong> <span style="color: ${answerColor}; font-weight: bold; font-size: 1.1rem;">${correctAnswer}</span><br/><strong>Explanation:</strong> ${escapeHtml(item.explanation || 'N/A')}`;
+                    } else if (typeInfo.type === 'fib') {
+                        // Fill-in-the-blank
+                        answerHtml = `<strong>✓ Answer:</strong> <span style="background: var(--primary); color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">${escapeHtml(item.answer || '?')}</span><br/><strong>Context/Explanation:</strong> ${escapeHtml(item.explanation || 'N/A')}`;
+                    }
+
+                    html += `<div class="question-item" onclick="this.classList.toggle('expanded')">
+                        <div class="question-toggle">
+                            <div>
+                                <strong>Q${qNum}: ${escapeHtml(item.question)}</strong>
+                                ${keywordsHtml}
+                            </div>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div class="answer-text" style="margin-top: 12px; padding: 12px; background: #F0FDF4; border-left: 3px solid var(--success); border-radius: 4px;">
+                            ${answerHtml}
+                        </div>
+                    </div>`;
+                });
+
+                html += '</div>';
+            }
+
+            questionsContainer.innerHTML = html || '<p style="text-align: center; color: var(--text-light); padding: 20px;">No questions to display</p>';
+        }
+
+        // ========== GENERATE SUMMARY ==========
+        async function generateSummary() {
+            if (!selectedDocId && documents.length === 0) {
+                showAlert('Please upload a document first', 'info');
+                return;
+            }
+
+            const summaryBtn = document.getElementById('summaryBtn');
+            const summaryContent = document.getElementById('summaryContent');
+            summaryBtn.disabled = true;
+            summaryContent.innerHTML = '<div style="text-align: center; padding: 20px;"><div class="spinner" style="margin: 0 auto;"></div><p>Generating summary...</p></div>';
+
+            try {
+                const response = await fetch('/api/summarize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        doc_id: selectedDocId || (documents.length > 0 ? documents[0].id : null)
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentSummary = data;
+                    displaySummary(data);
+                    
+                    // Switch to summary tab
+                    document.querySelectorAll('.question-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelector('[data-type="summary"]').classList.add('active');
+                    document.getElementById('questionsContainer').style.display = 'none';
+                    document.getElementById('summaryContainer').style.display = 'block';
+                    
+                    showAlert('✓ Summary generated successfully!', 'success');
+                } else {
+                    showAlert(data.error || 'Failed to generate summary', 'error');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            } finally {
+                summaryBtn.disabled = false;
+            }
+        }
+
+        // ========== DISPLAY SUMMARY ==========
+        function displaySummary(data) {
+            const summaryContent = document.getElementById('summaryContent');
+
+            let html = `
+                <h3>📋 ${escapeHtml(data.title || 'Summary')}</h3>
+                <p>${escapeHtml(data.overview || data.summary || '')}</p>
+            `;
+
+            // Main sections
+            if (data.main_sections && Array.isArray(data.main_sections) && data.main_sections.length > 0) {
+                html += `<h3 style="margin-top: 20px;">📚 Main Sections</h3>`;
+                data.main_sections.forEach((section, idx) => {
+                    html += `
+                        <div style="margin-bottom: 20px; padding: 15px; background: white; border-left: 4px solid var(--primary); border-radius: 4px;">
+                            <h4 style="color: var(--primary); margin-bottom: 8px;">${idx + 1}. ${escapeHtml(section.section_name)}</h4>
+                            <p style="line-height: 1.6; color: var(--text-dark);">${escapeHtml(section.description)}</p>
+                            ${section.key_concepts && section.key_concepts.length > 0 ? `
+                                <div style="margin-top: 8px;">
+                                    <strong>Key Concepts:</strong>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">
+                                        ${section.key_concepts.map(concept => `<span class="keyword-badge" style="font-size: 0.8rem;">${escapeHtml(concept)}</span>`).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+            }
+
+            // Key points
+            if (data.key_points && Array.isArray(data.key_points)) {
+                html += `<h3 style="margin-top: 20px;">🎯 Key Points</h3><ul>`;
+                data.key_points.forEach(point => {
+                    html += `<li>✓ ${escapeHtml(point)}</li>`;
+                });
+                html += `</ul>`;
+            }
+
+            // Keyword definitions
+            if (data.keyword_definitions && Array.isArray(data.keyword_definitions) && data.keyword_definitions.length > 0) {
+                html += `<h3 style="margin-top: 20px;">📖 Key Terms & Definitions</h3>`;
+                data.keyword_definitions.forEach(item => {
+                    html += `
+                        <div style="margin-bottom: 15px; padding: 12px; background: #F0F9FF; border-left: 3px solid var(--secondary); border-radius: 4px;">
+                            <h4 style="color: var(--secondary); margin-bottom: 5px; font-size: 1rem;">${escapeHtml(item.term)}</h4>
+                            <p style="color: var(--text-dark); margin: 5px 0;"><strong>Definition:</strong> ${escapeHtml(item.definition)}</p>
+                            <p style="color: var(--text-light); margin: 5px 0; font-size: 0.9rem;"><strong>Context:</strong> ${escapeHtml(item.context)}</p>
+                        </div>
+                    `;
+                });
+            }
+
+            // Important details
+            if (data.important_details) {
+                html += `
+                    <div style="margin-top: 20px; padding: 15px; background: #FEF3C7; border-left: 4px solid var(--warning); border-radius: 4px;">
+                        <h3 style="color: var(--warning); margin-bottom: 10px;">⚠️ Important Details</h3>
+                        <p>${escapeHtml(data.important_details)}</p>
+                    </div>
+                `;
+            }
+
+            // Conclusion
+            if (data.conclusion) {
+                html += `
+                    <div style="margin-top: 20px; padding: 15px; background: #ECFDF5; border-left: 4px solid var(--success); border-radius: 4px;">
+                        <h3 style="color: var(--success); margin-bottom: 10px;">✨ Conclusion</h3>
+                        <p>${escapeHtml(data.conclusion)}</p>
+                    </div>
+                `;
+            }
+
+            summaryContent.innerHTML = html;
+        }
+
+        // ========== LOAD AND DISPLAY DOCUMENT CONTENT ==========
+        async function loadDocumentContent() {
+            if (!selectedDocId) {
+                document.getElementById('contentView').innerHTML = '<p style="text-align: center; color: var(--text-light);">Please select a document first</p>';
+                return;
+            }
+
+            const contentView = document.getElementById('contentView');
+            contentView.innerHTML = '<p style="text-align: center;">Loading content...</p>';
+
+            try {
+                const response = await fetch(`/api/document-content/${selectedDocId}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    const content = data.content;
+                    const name = data.name;
+
+                    // Display file name and size
+                    let html = `<strong>📄 File: ${escapeHtml(name)}</strong>\n`;
+                    html += `<strong>📏 Size: ${(data.file_size / 1024).toFixed(2)} KB</strong>\n`;
+                    html += `<strong>⏰ Uploaded: ${new Date(data.upload_time).toLocaleString()}</strong>\n`;
+                    html += '\n' + '='.repeat(80) + '\n\n';
+                    html += escapeHtml(content);
+
+                    contentView.innerHTML = html;
+                } else {
+                    contentView.innerHTML = `<p style="color: var(--danger);">Error: ${data.error}</p>`;
+                }
+            } catch (error) {
+                contentView.innerHTML = `<p style="color: var(--danger);">Error loading content: ${error.message}</p>`;
+            }
+        }
+
+        // ========== CHAT FUNCTIONS ==========
+        async function sendMessage() {
+            const message = chatInput.value.trim();
+            
+            // Validation
+            if (!message) {
+                showAlert('Please type a message', 'info');
+                return;
+            }
+            
+            if (message.length < 2) {
+                showAlert('Message too short', 'info');
+                return;
+            }
+            
+            if (!documents || documents.length === 0) {
+                showAlert('Please upload a document first', 'info');
+                return;
+            }
+
+            // Add user message
+            addChatMessage(message, 'user');
+            chatInput.value = '';
+            chatInput.disabled = true;
+            sendBtn.disabled = true;
+
+            try {
+                const payload = {
+                    message: message,
+                    doc_id: useAllDocs.checked ? null : selectedDocId,
+                    use_all_docs: useAllDocs.checked
+                };
+                
+                console.log('Sending chat message:', payload);
+                
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                console.log('Chat response:', response.status, data);
+
+                if (response.ok) {
+                    addChatMessage(data.response, 'bot', data.sources_used);
+                } else {
+                    const errorMsg = data.error || 'Error processing message';
+                    addChatMessage(`Error: ${errorMsg}`, 'bot');
+                }
+            } catch (error) {
+                console.error('Chat error:', error);
+                addChatMessage('Network error: ' + error.message, 'bot');
+            } finally {
+                chatInput.disabled = false;
+                sendBtn.disabled = false;
+                chatInput.focus();
+            }
+        }
+
+        function addChatMessage(message, sender, sources = []) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + sender;
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = sender === 'user' ? '👤' : '🤖';
+
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+
+            if (sender === 'bot' && sources && sources.length > 0) {
+                bubble.innerHTML = `${escapeHtml(message)}<br><small style="opacity: 0.7; margin-top: 8px; display: block;">📚 Sources: ${sources.join(', ')}</small>`;
+            } else {
+                bubble.textContent = message;
+            }
+
+            if (sender === 'user') {
+                messageDiv.appendChild(bubble);
+                messageDiv.appendChild(avatar);
+            } else {
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(bubble);
+            }
+
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // ========== UTILITY FUNCTIONS ==========
+        function showAlert(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            
+            const container = document.querySelector('.main-content');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            setTimeout(() => alertDiv.remove(), 5000);
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ========== INITIAL LOAD ==========
+        loadDocuments();
+    </script>
+</body>
+</html>

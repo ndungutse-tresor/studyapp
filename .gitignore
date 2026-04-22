@@ -1,0 +1,11 @@
+*.db
+*.db-journal
+uploads/
+__pycache__/
+*.pyc
+*.pyo
+.env
+.env.local
+server.log
+*.log
+.DS_Store
