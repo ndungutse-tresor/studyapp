@@ -16,11 +16,15 @@ from typing import Dict
 
 # ── Optional dependencies ──────────────────────────────────────────────────
 try:
-    from mistralai import Mistral
+    from mistralai import Mistral          # mistralai >= 1.0
     MISTRAL_AVAILABLE = True
 except ImportError:
-    MISTRAL_AVAILABLE = False
-    print("⚠️  mistralai not installed. Run: pip install mistralai")
+    try:
+        from mistralai.client import MistralClient as Mistral  # mistralai < 1.0
+        MISTRAL_AVAILABLE = True
+    except ImportError:
+        MISTRAL_AVAILABLE = False
+        print("⚠️  mistralai not installed. Run: pip install mistralai")
 
 try:
     import PyPDF2 as pypdf
@@ -692,12 +696,31 @@ def health():
         'documents_loaded': len(documents),
         'database': 'postgresql' if USE_POSTGRES else 'sqlite',
         'mistral_api': 'configured' if mistral_client else 'not configured',
+        'mistral_package_installed': MISTRAL_AVAILABLE,
+        'mistral_key_set': bool(MISTRAL_API_KEY),
         'features': {
             'pdf_support': PYPDF_AVAILABLE,
             'docx_support': PYTHON_DOCX_AVAILABLE,
             'ai_enabled': MISTRAL_AVAILABLE and bool(MISTRAL_API_KEY),
         },
         'timestamp': datetime.now().isoformat(),
+    }), 200
+
+
+@app.route('/api/debug', methods=['GET'])
+def debug():
+    """Diagnostic endpoint — shows what is configured without exposing secrets."""
+    key = MISTRAL_API_KEY
+    masked = (key[:4] + '...' + key[-4:]) if len(key) >= 8 else ('(empty)' if not key else '(too short)')
+    return jsonify({
+        'MISTRAL_AVAILABLE': MISTRAL_AVAILABLE,
+        'MISTRAL_API_KEY': masked,
+        'mistral_client_created': mistral_client is not None,
+        'DATABASE_URL_set': bool(DATABASE_URL),
+        'USE_POSTGRES': USE_POSTGRES,
+        'UPLOAD_FOLDER': UPLOAD_FOLDER,
+        'IS_PRODUCTION': IS_PRODUCTION,
+        'documents_in_memory': len(documents),
     }), 200
 
 
