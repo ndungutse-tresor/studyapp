@@ -1,7 +1,7 @@
 Flask==3.0.0
 Flask-CORS==4.0.0
 Werkzeug==3.0.1
-mistralai>=1.0.0
+groq>=0.8.0
 PyPDF2==3.0.1
 python-docx==0.8.11
 gunicorn==21.2.0

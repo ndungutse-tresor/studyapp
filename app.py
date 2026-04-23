@@ -16,15 +16,11 @@ from typing import Dict
 
 # ── Optional dependencies ──────────────────────────────────────────────────
 try:
-    from mistralai import Mistral          # mistralai >= 1.0
-    MISTRAL_AVAILABLE = True
+    from groq import Groq
+    GROQ_AVAILABLE = True
 except ImportError:
-    try:
-        from mistralai.client import MistralClient as Mistral  # mistralai < 1.0
-        MISTRAL_AVAILABLE = True
-    except ImportError:
-        MISTRAL_AVAILABLE = False
-        print("⚠️  mistralai not installed. Run: pip install mistralai")
+    GROQ_AVAILABLE = False
+    print("⚠️  groq not installed. Run: pip install groq")
 
 try:
     import PyPDF2 as pypdf
@@ -44,7 +40,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-change-in-production')
 CORS(app)
 
 # ── Config from environment ────────────────────────────────────────────────
-MISTRAL_API_KEY  = os.environ.get('MISTRAL_API_KEY', '')
+GROQ_API_KEY     = os.environ.get('GROQ_API_KEY', '')
 DATABASE_URL     = os.environ.get('DATABASE_URL', '')
 DATABASE_FILE    = os.environ.get('DATABASE_FILE', 'study_data.db')
 # Use /tmp on cloud (ephemeral), local folder otherwise
@@ -62,8 +58,9 @@ app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
 USE_POSTGRES = DATABASE_URL.startswith(('postgresql', 'postgres'))
 PH = '%s' if USE_POSTGRES else '?'   # parameter placeholder
 
-# ── Mistral client ─────────────────────────────────────────────────────────
-mistral_client = Mistral(api_key=MISTRAL_API_KEY) if (MISTRAL_AVAILABLE and MISTRAL_API_KEY) else None
+# ── Groq client ───────────────────────────────────────────────────────────
+GROQ_MODEL = 'llama-3.3-70b-versatile'
+groq_client = Groq(api_key=GROQ_API_KEY) if (GROQ_AVAILABLE and GROQ_API_KEY) else None
 
 # In-memory document store (cache loaded from DB on startup / upload)
 documents: Dict = {}
@@ -345,8 +342,8 @@ def parse_json_response(response_text):
 
 # ── AI helpers ─────────────────────────────────────────────────────────────
 def generate_questions_from_text(content):
-    if not mistral_client:
-        return {'error': 'Mistral API not configured. Set MISTRAL_API_KEY environment variable.'}
+    if not groq_client:
+        return {'error': 'Groq API not configured. Set GROQ_API_KEY environment variable.'}
 
     content = clean_text(content)
     if len(content) < 100:
@@ -375,11 +372,11 @@ Return ONLY valid JSON:
 }}"""
 
     try:
-        msg = mistral_client.chat.complete(
-            model='mistral-small-latest',
+        response = groq_client.chat.completions.create(
+            model=GROQ_MODEL,
             messages=[{'role': 'user', 'content': prompt}]
         )
-        return parse_json_response(msg.choices[0].message.content)
+        return parse_json_response(response.choices[0].message.content)
     except Exception as e:
         return {'error': f'AI generation failed: {e}'}
 
@@ -502,8 +499,8 @@ def generate_questions():
 @app.route('/api/chat', methods=['POST'])
 def chat():
     try:
-        if not mistral_client:
-            return jsonify({'error': 'Mistral API not configured'}), 503
+        if not groq_client:
+            return jsonify({'error': 'Groq API not configured. Set GROQ_API_KEY environment variable.'}), 503
 
         data = request.json or {}
         message = (data.get('message') or '').strip()
@@ -562,8 +559,8 @@ CONTENT:
 ---
 {f"RECENT CONVERSATION:{chr(10)}{history_text}" if history_text else ''}"""
 
-        response = mistral_client.chat.complete(
-            model='mistral-small-latest',
+        response = groq_client.chat.completions.create(
+            model=GROQ_MODEL,
             messages=[
                 {'role': 'system', 'content': system_prompt},
                 {'role': 'user', 'content': message},
@@ -598,8 +595,8 @@ def chat_history_endpoint():
 @app.route('/api/summarize', methods=['POST'])
 def summarize():
     try:
-        if not mistral_client:
-            return jsonify({'error': 'Mistral API not configured'}), 503
+        if not groq_client:
+            return jsonify({'error': 'Groq API not configured. Set GROQ_API_KEY environment variable.'}), 503
 
         data = request.json or {}
         doc_id = data.get('doc_id')
@@ -646,8 +643,8 @@ Return ONLY valid JSON:
   "conclusion": "Main takeaways"
 }}"""
 
-        response = mistral_client.chat.complete(
-            model='mistral-small-latest',
+        response = groq_client.chat.completions.create(
+            model=GROQ_MODEL,
             messages=[{'role': 'user', 'content': prompt}]
         )
         summary_data = parse_json_response(response.choices[0].message.content)
@@ -695,13 +692,13 @@ def health():
         'version': '2.0',
         'documents_loaded': len(documents),
         'database': 'postgresql' if USE_POSTGRES else 'sqlite',
-        'mistral_api': 'configured' if mistral_client else 'not configured',
-        'mistral_package_installed': MISTRAL_AVAILABLE,
-        'mistral_key_set': bool(MISTRAL_API_KEY),
+        'groq_api': 'configured' if groq_client else 'not configured',
+        'groq_package_installed': GROQ_AVAILABLE,
+        'groq_key_set': bool(GROQ_API_KEY),
         'features': {
             'pdf_support': PYPDF_AVAILABLE,
             'docx_support': PYTHON_DOCX_AVAILABLE,
-            'ai_enabled': MISTRAL_AVAILABLE and bool(MISTRAL_API_KEY),
+            'ai_enabled': GROQ_AVAILABLE and bool(GROQ_API_KEY),
         },
         'timestamp': datetime.now().isoformat(),
     }), 200
@@ -710,12 +707,12 @@ def health():
 @app.route('/api/debug', methods=['GET'])
 def debug():
     """Diagnostic endpoint — shows what is configured without exposing secrets."""
-    key = MISTRAL_API_KEY
+    key = GROQ_API_KEY
     masked = (key[:4] + '...' + key[-4:]) if len(key) >= 8 else ('(empty)' if not key else '(too short)')
     return jsonify({
-        'MISTRAL_AVAILABLE': MISTRAL_AVAILABLE,
-        'MISTRAL_API_KEY': masked,
-        'mistral_client_created': mistral_client is not None,
+        'GROQ_AVAILABLE': GROQ_AVAILABLE,
+        'GROQ_API_KEY': masked,
+        'groq_client_created': groq_client is not None,
         'DATABASE_URL_set': bool(DATABASE_URL),
         'USE_POSTGRES': USE_POSTGRES,
         'UPLOAD_FOLDER': UPLOAD_FOLDER,
@@ -741,7 +738,7 @@ def startup():
     print('   AI Study Assistant')
     print('='*50)
     print(f'  Database : {"PostgreSQL" if USE_POSTGRES else f"SQLite ({DATABASE_FILE})"}')
-    print(f'  Mistral  : {"Enabled" if mistral_client else "Not configured"}')
+    print(f'  Groq     : {"Enabled (" + GROQ_MODEL + ")" if groq_client else "Not configured — set GROQ_API_KEY"}')
     print(f'  PDF      : {"Enabled" if PYPDF_AVAILABLE else "Not installed"}')
     print(f'  DOCX     : {"Enabled" if PYTHON_DOCX_AVAILABLE else "Not installed"}')
 
