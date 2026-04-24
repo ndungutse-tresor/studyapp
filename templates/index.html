@@ -898,6 +898,8 @@
             }
 
             uploading.classList.add('active');
+            const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+            document.querySelector('#uploading p').textContent = `Uploading ${sizeMB} MB, please wait...`;
 
             const formData = new FormData();
             formData.append('file', file);
@@ -908,10 +910,23 @@
                     body: formData
                 });
 
-                const data = await response.json();
+                // Handle non-JSON responses (e.g. 413 from proxy before reaching Flask)
+                let data;
+                const contentType = response.headers.get('content-type') || '';
+                if (contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    const text = await response.text();
+                    if (response.status === 413) {
+                        showAlert('File is too large for the server to accept. Try a smaller file.', 'error');
+                        return;
+                    }
+                    showAlert('Unexpected server error: ' + response.status, 'error');
+                    return;
+                }
 
                 if (response.ok) {
-                    showAlert(`✓ Document "${data.filename}" uploaded successfully!`, 'success');
+                    showAlert(`✓ "${data.filename}" uploaded successfully!`, 'success');
                     loadDocuments();
                     generateBtn.disabled = false;
                     chatInput.disabled = false;
@@ -920,9 +935,10 @@
                     showAlert(data.error || 'Upload failed', 'error');
                 }
             } catch (error) {
-                showAlert('Network error: ' + error.message, 'error');
+                showAlert('Upload failed — file may be too large or connection timed out.', 'error');
             } finally {
                 uploading.classList.remove('active');
+                document.querySelector('#uploading p').textContent = 'Uploading and processing...';
                 fileInput.value = '';
             }
         }

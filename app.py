@@ -393,6 +393,12 @@ def favicon():
     return jsonify({'status': 'ok'}), 200
 
 
+@app.errorhandler(413)
+def file_too_large(e):
+    mb = MAX_FILE_SIZE // (1024 * 1024)
+    return jsonify({'error': f'File too large. Maximum allowed size is {mb} MB.'}), 413
+
+
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
     try:
