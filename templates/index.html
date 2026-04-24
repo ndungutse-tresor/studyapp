@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Study Guide - AI-Powered Learning Assistant</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
     <style>
         * {
             margin: 0;
@@ -985,7 +986,6 @@
 
         // ========== SELECT DOCUMENT ==========
         function selectDocument(docId, element) {
-            console.log('Selecting document:', docId);
             selectedDocId = docId;
             document.querySelectorAll('.doc-item').forEach(item => item.classList.remove('active'));
             element.classList.add('active');
@@ -999,43 +999,29 @@
 
         // ========== GENERATE QUESTIONS ==========
         async function generateQuestions() {
-            console.log('Generate button clicked. selectedDocId:', selectedDocId);
-
             if (!selectedDocId) {
-                console.log('No document selected!');
                 showAlert('Please select a document first', 'info');
                 return;
             }
 
-            console.log('Starting question generation for doc:', selectedDocId);
             generateBtn.disabled = true;
             questionsContainer.innerHTML = '<div style="text-align: center; padding: 20px;"><div class="spinner" style="margin: 0 auto;"></div><p>Generating questions...</p></div>';
 
             try {
                 const payload = { doc_id: selectedDocId, type: 'all' };
-                console.log('Sending payload:', payload);
-
                 const response = await fetch('/api/generate-questions', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
-                console.log('Response status:', response.status);
                 const data = await response.json();
-                console.log('Response data:', data);
 
                 if (response.ok) {
                     currentQuestions = data.questions;
-                    console.log('Questions received:', currentQuestions);
-                    console.log('Open-ended count:', currentQuestions.open_ended?.length || 0);
-                    console.log('Multiple choice count:', currentQuestions.multiple_choice?.length || 0);
-                    console.log('True/False count:', currentQuestions.true_false?.length || 0);
-                    console.log('Fill-in-blank count:', currentQuestions.fill_in_blank?.length || 0);
                     displayQuestions();
                     showAlert(`✓ Generated questions from "${data.doc_name}"`, 'success');
                 } else {
-                    console.log('API error:', data.error);
                     showAlert(data.error || 'Failed to generate questions', 'error');
                 }
             } catch (error) {
@@ -1315,8 +1301,6 @@
                     use_all_docs: useAllDocs.checked
                 };
                 
-                console.log('Sending chat message:', payload);
-                
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1324,7 +1308,6 @@
                 });
 
                 const data = await response.json();
-                console.log('Chat response:', response.status, data);
 
                 if (response.ok) {
                     addChatMessage(data.response, 'bot', data.sources_used);
