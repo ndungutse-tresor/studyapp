@@ -34,6 +34,13 @@ try:
 except ImportError:
     PYTHON_DOCX_AVAILABLE = False
 
+try:
+    from pptx import Presentation as PptxPresentation
+    PPTX_AVAILABLE = True
+except ImportError:
+    PPTX_AVAILABLE = False
+    print("⚠️  python-pptx not installed. Run: pip install python-pptx")
+
 # ── App setup ──────────────────────────────────────────────────────────────
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-change-in-production')
@@ -46,8 +53,8 @@ DATABASE_FILE    = os.environ.get('DATABASE_FILE', 'study_data.db')
 # Use /tmp on cloud (ephemeral), local folder otherwise
 IS_PRODUCTION    = bool(os.environ.get('RENDER') or os.environ.get('RAILWAY_ENVIRONMENT'))
 UPLOAD_FOLDER    = '/tmp/uploads' if IS_PRODUCTION else 'uploads'
-ALLOWED_EXTENSIONS = {'pdf', 'txt', 'docx', 'doc', 'md', 'csv'}
-MAX_FILE_SIZE    = 10 * 1024 * 1024   # 10 MB
+ALLOWED_EXTENSIONS = {'pptx', 'txt', 'docx', 'doc'}
+MAX_FILE_SIZE    = 400 * 1024 * 1024  # 400 MB
 MAX_CONTENT_PER_DOC = 20000
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -289,18 +296,17 @@ def extract_text_from_file(filepath):
     ext = filepath.rsplit('.', 1)[1].lower()
     text = ''
 
-    if ext == 'pdf':
-        if not PYPDF_AVAILABLE:
-            raise Exception('PyPDF2 not installed')
-        with open(filepath, 'rb') as f:
-            reader = pypdf.PdfReader(f)
-            for i, page in enumerate(reader.pages):
-                try:
-                    text += f'\n--- Page {i+1} ---\n' + (page.extract_text() or '')
-                except Exception:
-                    continue
+    if ext == 'pptx':
+        if not PPTX_AVAILABLE:
+            raise Exception('python-pptx not installed. Run: pip install python-pptx')
+        prs = PptxPresentation(filepath)
+        for i, slide in enumerate(prs.slides, 1):
+            text += f'\n--- Slide {i} ---\n'
+            for shape in slide.shapes:
+                if hasattr(shape, 'text') and shape.text.strip():
+                    text += shape.text.strip() + '\n'
 
-    elif ext in ('txt', 'md'):
+    elif ext == 'txt':
         try:
             with open(filepath, encoding='utf-8') as f:
                 text = f.read()
@@ -313,10 +319,6 @@ def extract_text_from_file(filepath):
             raise Exception('python-docx not installed')
         doc = DocxDocument(filepath)
         text = '\n'.join(p.text for p in doc.paragraphs if p.text.strip())
-
-    elif ext == 'csv':
-        with open(filepath, encoding='utf-8') as f:
-            text = f.read()
 
     text = re.sub(r'\n{3,}', '\n\n', text).strip()
     if not text:
@@ -696,7 +698,7 @@ def health():
         'groq_package_installed': GROQ_AVAILABLE,
         'groq_key_set': bool(GROQ_API_KEY),
         'features': {
-            'pdf_support': PYPDF_AVAILABLE,
+            'pptx_support': PPTX_AVAILABLE,
             'docx_support': PYTHON_DOCX_AVAILABLE,
             'ai_enabled': GROQ_AVAILABLE and bool(GROQ_API_KEY),
         },
@@ -739,8 +741,8 @@ def startup():
     print('='*50)
     print(f'  Database : {"PostgreSQL" if USE_POSTGRES else f"SQLite ({DATABASE_FILE})"}')
     print(f'  Groq     : {"Enabled (" + GROQ_MODEL + ")" if groq_client else "Not configured — set GROQ_API_KEY"}')
-    print(f'  PDF      : {"Enabled" if PYPDF_AVAILABLE else "Not installed"}')
-    print(f'  DOCX     : {"Enabled" if PYTHON_DOCX_AVAILABLE else "Not installed"}')
+    print(f'  PPTX     : {"Enabled" if PPTX_AVAILABLE else "Not installed"}')
+    print(f'  DOCX/DOC : {"Enabled" if PYTHON_DOCX_AVAILABLE else "Not installed"}')
 
     init_db()
     print('✓ Database initialized')

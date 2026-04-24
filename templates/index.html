@@ -721,13 +721,13 @@
                     <div class="upload-area" id="uploadArea">
                         <div class="upload-icon">📄</div>
                         <p class="main-text">Click to upload or drag and drop</p>
-                        <p class="sub-text">PDF, Word, TXT, Markdown, CSV (max 10MB)</p>
+                        <p class="sub-text">PowerPoint (.pptx), Word (.doc, .docx), Text (.txt) — max 400MB</p>
                     </div>
                     <div class="uploading" id="uploading">
                         <div class="spinner"></div>
                         <p>Uploading and processing...</p>
                     </div>
-                    <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.txt,.md,.csv">
+                    <input type="file" id="fileInput" accept=".pptx,.docx,.doc,.txt">
                 </div>
 
                 <!-- QUESTIONS CARD -->
@@ -891,8 +891,8 @@
 
         // ========== FILE UPLOAD ==========
         async function handleFileUpload(file) {
-            if (file.size > 10 * 1024 * 1024) {
-                showAlert('File is too large (max 10MB)', 'error');
+            if (file.size > 400 * 1024 * 1024) {
+                showAlert('File is too large (max 400MB)', 'error');
                 return;
             }
 
