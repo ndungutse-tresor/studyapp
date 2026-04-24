@@ -131,6 +131,38 @@
             color: var(--text-light);
         }
 
+        .doc-item-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 6px;
+        }
+
+        .doc-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .doc-delete-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 2px 5px;
+            font-size: 1rem;
+            border-radius: 4px;
+            line-height: 1;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+
+        .doc-delete-btn:hover {
+            background: #FEE2E2;
+            color: var(--danger);
+            transform: none;
+            box-shadow: none;
+        }
+
         .empty-docs {
             text-align: center;
             color: var(--text-light);
@@ -915,10 +947,22 @@
                     const item = document.createElement('div');
                     item.className = 'doc-item' + (doc.id === selectedDocId ? ' active' : '');
                     item.innerHTML = `
-                        <div class="doc-item-name">${doc.name}</div>
-                        <div class="doc-item-meta">${formatDate(doc.upload_time)}</div>
+                        <div class="doc-item-header">
+                            <div class="doc-item-info">
+                                <div class="doc-item-name" title="${doc.name}">${doc.name}</div>
+                                <div class="doc-item-meta">${formatDate(doc.upload_time)}</div>
+                            </div>
+                            <button class="doc-delete-btn" title="Delete document">🗑️</button>
+                        </div>
                     `;
                     item.addEventListener('click', () => selectDocument(doc.id, item));
+
+                    // Delete button: stop propagation so it doesn't select the doc
+                    item.querySelector('.doc-delete-btn').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        deleteDocument(doc.id, doc.name);
+                    });
+
                     docList.appendChild(item);
 
                     // Auto-select first document if none selected
@@ -1348,6 +1392,37 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        // ========== DELETE DOCUMENT ==========
+        async function deleteDocument(docId, docName) {
+            if (!confirm(`Delete "${docName}"?\n\nThis will also remove its saved questions and summary.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/delete-document/${docId}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    // If the deleted doc was selected, clear selection
+                    if (selectedDocId === docId) {
+                        selectedDocId = null;
+                        currentQuestions = null;
+                        questionsContainer.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;">Upload a document and click "Generate Questions" to start</p>';
+                        generateBtn.disabled = true;
+                        document.getElementById('summaryBtn').disabled = true;
+                    }
+                    showAlert(`"${docName}" deleted.`, 'success');
+                    loadDocuments();
+                } else {
+                    showAlert(data.error || 'Failed to delete document', 'error');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
         }
 
         // ========== INITIAL LOAD ==========
