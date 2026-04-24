@@ -51,7 +51,11 @@ GROQ_API_KEY     = os.environ.get('GROQ_API_KEY', '')
 DATABASE_URL     = os.environ.get('DATABASE_URL', '')
 DATABASE_FILE    = os.environ.get('DATABASE_FILE', 'study_data.db')
 # Use /tmp on cloud (ephemeral), local folder otherwise
-IS_PRODUCTION    = bool(os.environ.get('RENDER') or os.environ.get('RAILWAY_ENVIRONMENT'))
+IS_PRODUCTION    = bool(
+    os.environ.get('RENDER') or
+    os.environ.get('RAILWAY_ENVIRONMENT') or
+    os.environ.get('FLY_APP_NAME')          # set automatically by Fly.io
+)
 UPLOAD_FOLDER    = '/tmp/uploads' if IS_PRODUCTION else 'uploads'
 ALLOWED_EXTENSIONS = {'pptx', 'txt', 'docx', 'doc'}
 MAX_FILE_SIZE    = 400 * 1024 * 1024  # 400 MB
